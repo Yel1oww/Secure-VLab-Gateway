@@ -122,9 +122,10 @@ Precise **Destination NAT (DNAT)** rules were crafted to securely expose interna
 
 | Service | External Port | Internal Target | Internal Port |
 |---|---|---|---|
-| **HTTP (Nginx)** | `80` | `192.168.52.2` | `80` |
 | **SSH** | `2222` | `192.168.52.2` | `22` |
 | **RDP** | `3333` | `192.168.52.3` | `3389` |
+
+> **Note:** The Nginx web server (`192.168.52.2:80`) is intentionally **not exposed externally**. HTTP access is restricted to the internal LAN only.
 
 pfSense gateway and routing configuration:
 
@@ -213,7 +214,7 @@ Before exposing any service through the firewall, a secondary **Windows 11 VM** 
 
 | Test | From | To | Result |
 |---|---|---|---|
-| **HTTP** | Windows 11 (DHCP) | `192.168.52.2:80` | ✅ Nginx responding |
+| **HTTP** | Windows 11 (DHCP) | `192.168.52.2:80` | ✅ Nginx responding — LAN only, not forwarded externally |
 | **SSH** | Windows 11 (DHCP) | `192.168.52.2:22` | ✅ Session established |
 | **RDP** | Windows 11 (DHCP) | `192.168.52.3:3389` | ✅ Desktop accessible |
 
@@ -228,7 +229,7 @@ pfSense successfully logs packet increment and traffic passing through all creat
 
 ### ✅ Successful Nginx HTTP Access
 
-Accessing the internal Linux web server through the pfSense WAN IP:
+Accessing the Nginx web server from the **internal Windows 11 test client** (LAN only — not exposed externally):
 
 ![Nginx Access](screenshots/11_nginx_access.png)
 
