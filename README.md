@@ -255,12 +255,7 @@ Secure-VLab-Gateway/
 ├── README.md
 ├── configs/
 │   ├── netplan/
-│   │   └── 00-installer-config.yaml
-│   ├── pfsense/
-│   │   ├── nat-rules.xml
-│   │   └── firewall-rules.xml
-│   └── rdp/
-│       └── client-config.rdp
+│       └── 00-installer-config.yaml
 └── screenshots/
     ├── 01_pfsense_menu.png
     ├── 02_pfsense_settings1.png
