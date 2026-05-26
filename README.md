@@ -122,7 +122,7 @@ Precise **Destination NAT (DNAT)** rules were crafted to securely expose interna
 
 | Service | External Port | Internal Target | Internal Port |
 |---|---|---|---|
-| **HTTP (Nginx)** | `80` | `192.168.52.2` | `80` |
+| **HTTP (Nginx)** | `Internal Access Only` | `192.168.52.2` | `80` |
 | **SSH** | `2222` | `192.168.52.2` | `22` |
 | **RDP** | `3333` | `192.168.52.3` | `3389` |
 
