@@ -14,9 +14,8 @@
   - [Linux Infrastructure & Static Routing](#2-linux-infrastructure--static-declarative-routing)
   - [Service Delivery & DNAT Policies](#3-service-delivery--dnat-policies-port-forwarding)
 - [Engineering Log: Troubleshooting Case Studies](#-engineering-log-troubleshooting-case-studies)
-  - [Case Study A: Bogon/Private Network Filtering](#case-study-a-packet-drops-triggered-by-bogonprivate-network-filtering)
-  - [Case Study B: Asymmetric Routing Loops](#case-study-b-silent-asymmetric-routing-loops--ghost-handshakes)
-  - [Case Study C: RDP NTLM/NLA Blockade](#case-study-c-remote-desktop-handshake-blockade-via-native-win11-security-policies)
+  - [Case Study A: Asymmetric Routing Loops](#case-study-b-silent-asymmetric-routing-loops--ghost-handshakes)
+  - [Case Study B: RDP NTLM/NLA Blockade](#case-study-c-remote-desktop-handshake-blockade-via-native-win11-security-policies)
 - [Deployment Validation](#-deployment-validation--proof-of-concept)
 
 ---
@@ -142,17 +141,9 @@ RDP NAT redirect rule (WAN port 3333 → Windows 11 3389):
 
 ## 🔍 Engineering Log: Troubleshooting Case Studies
 
-### Case Study A: Packet Drops Triggered by Bogon/Private Network Filtering
-
-| | |
-|---|---|
-| **Symptom** | Management host received immediate `Connection refused` errors when probing the pfSense WAN IP |
-| **Root Cause** | The source IP `192.168.115.1` belongs to an RFC 1918 private block. pfSense drops packets from private networks on its WAN interface by default to mitigate spoofing attacks |
-| **Mitigation** | Disabled `Block private networks and loopback addresses` on the WAN interface settings |
-
 ---
 
-### Case Study B: Silent Asymmetric Routing Loops & Ghost Handshakes
+### Case Study A: Silent Asymmetric Routing Loops & Ghost Handshakes
 
 | | |
 |---|---|
@@ -178,7 +169,7 @@ WAN routing validated end-to-end after fix:
 
 ---
 
-### Case Study C: Remote Desktop Handshake Blockade via Native Win11 Security Policies
+### Case Study B: Remote Desktop Handshake Blockade via Native Win11 Security Policies
 
 **NTLM vs NLA Authentication Conflict**
 
