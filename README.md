@@ -14,8 +14,9 @@
   - [Linux Infrastructure & Static Routing](#2-linux-infrastructure--static-declarative-routing)
   - [Service Delivery & DNAT Policies](#3-service-delivery--dnat-policies-port-forwarding)
 - [Engineering Log: Troubleshooting Case Studies](#-engineering-log-troubleshooting-case-studies)
-  - [Case Study A: Asymmetric Routing Loops](#case-study-b-silent-asymmetric-routing-loops--ghost-handshakes)
-  - [Case Study B: RDP NTLM/NLA Blockade](#case-study-c-remote-desktop-handshake-blockade-via-native-win11-security-policies)
+  - [Case Study A: Asymmetric Routing Loops](#case-study-a-silent-asymmetric-routing-loops--ghost-handshakes)
+  - [Case Study B: RDP NTLM/NLA Blockade](#case-study-b-remote-desktop-handshake-blockade-via-native-win11-security-policies)
+- [Internal LAN Validation](#-internal-lan-validation)
 - [Deployment Validation](#-deployment-validation--proof-of-concept)
 
 ---
@@ -36,7 +37,8 @@ The entire infrastructure was designed and virtualized over a **Type-2 hyperviso
 | **pfSense Appliance** | WAN (VMnet8) | `192.168.115.131` *(Static)* | Perimeter Firewall & Default Gateway |
 | **pfSense Appliance** | LAN (VMnet1) | `192.168.52.1` *(Static)* | Core Router / Internal Gateway |
 | **Ubuntu Server VM** | LAN (VMnet1) | `192.168.52.2` *(Static via Netplan)* | Nginx Web Server (Linux Backend) |
-| **Windows 11 VM** | LAN (VMnet1) | `192.168.52.3` *(Static)* | Enterprise Administration Client |
+| **Windows 11 VM** | LAN (VMnet1) | `192.168.52.3` *(Static)* | Enterprise Administration Client (RDP Target) |
+| **Windows 11 VM** | LAN (VMnet1) | `192.168.52.x` *(DHCP)* | Internal Test Client (SSH, HTTP & RDP validation) |
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -52,13 +54,13 @@ The entire infrastructure was designed and virtualized over a **Type-2 hyperviso
                 └───────────┬──────────┘
                             │ VMnet1 (Trusted LAN Zone)
                             │ 192.168.52.0/24
-              ┌─────────────┴──────────────┐
-              │                            │
-  ┌───────────▼──────────┐    ┌────────────▼─────────┐
-  │   Ubuntu Server VM   │    │   Windows 11 VM      │
-  │    192.168.52.2      │    │    192.168.52.3      │
-  │   Nginx Web Server   │    │  Admin RDP Client    │
-  └──────────────────────┘    └──────────────────────┘
+        ┌───────────────┬───────────────┐
+        │               │               │
+┌───────▼──────┐ ┌──────▼───────┐ ┌────▼─────────────┐
+│ Ubuntu Server│ │ Windows 11 VM│ │  Windows 11 VM   │
+│ 192.168.52.2 │ │ 192.168.52.3 │ │  DHCP (52.x)     │
+│ Nginx / SSH  │ │  RDP Target  │ │  Internal Tester │
+└──────────────┘ └──────────────┘ └──────────────────┘
 ```
 
 ---
@@ -69,7 +71,7 @@ The entire infrastructure was designed and virtualized over a **Type-2 hyperviso
 
 Network isolation was enforced at the virtualization layer using **VMware Virtual Network Editor**:
 
-- **VMnet1** `(192.168.52.0/24)` — Trusted **internal LAN core** (Host-only). No endpoints within this zone can reach the outside world without explicit state inspection by the firewall.
+- **VMnet1** `(192.168.52.0/24)` — Trusted **internal LAN core** (Host-only). No endpoints within this zone can reach the outside world without explicit state inspection by the firewall. This segment hosts the Ubuntu Server, the Windows 11 RDP target, and a secondary Windows 11 VM used as an **internal test client** to validate LAN-side connectivity (SSH, HTTP, and RDP) before exposing services through the firewall.
 - **VMnet8** `(192.168.115.0/24)` — Untrusted **WAN zone** (NAT). Traffic originating from the physical host enters the perimeter from here.
 
 ![VMnet1 - LAN Config](screenshots/04_vmnet1_config.png)
@@ -141,8 +143,6 @@ RDP NAT redirect rule (WAN port 3333 → Windows 11 3389):
 
 ## 🔍 Engineering Log: Troubleshooting Case Studies
 
----
-
 ### Case Study A: Silent Asymmetric Routing Loops & Ghost Handshakes
 
 | | |
@@ -193,6 +193,20 @@ WAN routing validated end-to-end after fix:
 RDP credentials prompt successfully reached after mitigation:
 
 ![RDP Credentials Prompt](screenshots/15_rdp_credentials.png)
+
+---
+
+## 🧪 Internal LAN Validation
+
+Before exposing any service through the firewall, a secondary **Windows 11 VM** (DHCP-assigned on VMnet1) was used as an internal test client to confirm that all services were reachable and functioning correctly from within the LAN itself.
+
+| Test | From | To | Result |
+|---|---|---|---|
+| **HTTP** | Windows 11 (DHCP) | `192.168.52.2:80` | ✅ Nginx responding |
+| **SSH** | Windows 11 (DHCP) | `192.168.52.2:22` | ✅ Session established |
+| **RDP** | Windows 11 (DHCP) | `192.168.52.3:3389` | ✅ Desktop accessible |
+
+This step ensured that any connectivity failure encountered later was isolated to the **firewall/NAT layer**, not the services themselves.
 
 ---
 
